@@ -85,7 +85,7 @@ m$Order <- MOM.Mat$Order[match(m$taxon, MOM.Mat$TaxonomicName)]
 
 ##remove Perissodactyls (3 species)
 m <- m[!m$Order == "Perissodactyla",]
-
+m.spec <- m
 ##species level
 m.sp <- as.data.frame(getSpeciesAverages(m))
 m.sp$taxon <- row.names(m.sp)
@@ -180,7 +180,7 @@ summary(df.pca)
 ```{r}
 #plot(df.pca$x[,1], df.pca$x[,2], pch = 16, col = habitat.colors[m$habitat], ylab = "PC2", xlab = "PC1")
 
-autoplot(df.pca, data = m, colour = 'habitat', label = FALSE, label.size = 3, 
+autoplot(df.pca, data = m, colour = 'habitat', label = TRUE, label.size = 3, 
          loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3)+
   scale_color_manual(breaks = c("CH", "MH", "OH"),
                      values=c("dodgerblue", "chartreuse", "goldenrod1"))
@@ -195,6 +195,32 @@ autoplot(df.pca, data = m, x=2, y=3, choices = c(2:3), colour = 'habitat',
   scale_color_manual(breaks = c("CH", "MH", "OH"),
                      values=c("dodgerblue", "chartreuse", "goldenrod1"))
 ```
+
+##Project individuals onto species PCA
+```{r}
+dropCol <- c(1:5,13:20)
+df.spec <- log(m.spec[,-dropCol])
+df.spec <- df.spec[complete.cases(df.spec),]
+
+#also looked into using predict() as per https://stats.stackexchange.com/questions/2592/how-to-project-a-new-vector-onto-pca-space
+#predict and the scale() %*% reotation provide the same results (the former is imbedded in predict)
+#df.specimen <- scale(x = df.spec, center = df.pca$center, scale = df.pca$scale) %*% df.pca$rotation 
+
+df.specimen2 <- predict(object = df.pca, newdata = df.spec)  #loadings are the same but PC scores are different https://stackoverflow.com/questions/46828500/predict-new-data-into-pca-space-in-r
+#df.specimen2 <- predict(df.pca, df.spec) #predict uses the same function
+```
+
+```{r}
+#plot(df.pca$x[,1], df.pca$x[,2])
+
+autoplot(df.pca, data = m, colour = 'habitat', label = TRUE, label.size = 3, 
+         loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3)+
+  scale_color_manual(breaks = c("CH", "MH", "OH"),
+                     values=c("dodgerblue", "chartreuse", "goldenrod1"))+
+  geom_point(data = m.spec[rownames(m.spec) %in% rownames(df.specimen),], aes(x=df.specimen[,1], y=df.specimen[,2]))
+```
+
+
 
 ##K-means
 ```{r}
