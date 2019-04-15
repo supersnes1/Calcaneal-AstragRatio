@@ -204,9 +204,20 @@ df.spec <- df.spec[complete.cases(df.spec),]
 
 #also looked into using predict() as per https://stats.stackexchange.com/questions/2592/how-to-project-a-new-vector-onto-pca-space
 #predict and the scale() %*% reotation provide the same results (the former is imbedded in predict)
-#df.specimen <- scale(x = df.spec, center = df.pca$center, scale = df.pca$scale) %*% df.pca$rotation 
+df.specimen <- scale(x = df.spec, center = df.pca$center, scale = df.pca$scale) 
+df.specimen <- df.specimen %*% df.pca$rotation 
 
-df.specimen2 <- predict(object = df.pca, newdata = df.spec)  #loadings are the same but PC scores are different https://stackoverflow.com/questions/46828500/predict-new-data-into-pca-space-in-r
+#think about only doing this for the species that had multiple specimens (singletons are already in the training dataset)
+spec.count <- table(m.spec$taxon)
+spec.multi <- spec.count[spec.count > 1]
+spec.uniq <- unique(names(spec.multi))
+
+check.spec <- m.spec[m.spec$taxon %in% spec.uniq,]
+dropCol <- c(1:5,13:20)
+df.spec <- log(check.spec[,-dropCol])
+df.spec <- df.spec[complete.cases(df.spec),]
+
+df.specimen <- predict(object = df.pca, newdata = df.spec)  #loadings are the same but PC scores are different https://stackoverflow.com/questions/46828500/predict-new-data-into-pca-space-in-r
 #df.specimen2 <- predict(df.pca, df.spec) #predict uses the same function
 ```
 
@@ -250,6 +261,10 @@ library(MASS)
 
 lda.tst <- lda(x = as.matrix(df), grouping = m$habitat)
 plot(lda.tst, col = habitat.colors[m$habitat])
+```
+###Summary of LDA
+```{r}
+lda.tst
 ```
 
 ###Local Fisher Discriminant Analysis (LFDA)
@@ -395,4 +410,13 @@ pointLabel(df.phylo.pca$L[,2:3],             # set position of labels
            labels=rownames(df.phylo.pca$L),  # print labels
            cex=0.75 )
 ```
+
+###Test using CH and OH species/specimens and training dataset and MH as testing dataset
+```{r}
+m.train <- m.sp[!m.sp$habitat == "MH",]
+m.test <- m.sp[m.sp$habitat == "MH",]
+
+
+```
+
 
