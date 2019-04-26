@@ -207,7 +207,12 @@ df.spec <- df.spec[complete.cases(df.spec),]
 df.specimen <- scale(x = df.spec, center = df.pca$center, scale = df.pca$scale) 
 df.specimen <- df.specimen %*% df.pca$rotation 
 
-#think about only doing this for the species that had multiple specimens (singletons are already in the training dataset)
+#df.specimen <- predict(object = df.pca, newdata = df.spec)  #loadings are the same but PC scores are different https://stackoverflow.com/questions/46828500/predict-new-data-into-pca-space-in-r
+#df.specimen2 <- predict(df.pca, df.spec) #predict uses the same function
+
+#####Both predict() and the scale*loadings lead to the same exagerated values (PC1 is at least 1-2 magnitude greater that the training data)
+
+#think about only doing this for the species that had multiple specimens (singletons are already in the training dataset)  ####This does not change the problem
 spec.count <- table(m.spec$taxon)
 spec.multi <- spec.count[spec.count > 1]
 spec.uniq <- unique(names(spec.multi))
@@ -217,8 +222,11 @@ dropCol <- c(1:5,13:20)
 df.spec <- log(check.spec[,-dropCol])
 df.spec <- df.spec[complete.cases(df.spec),]
 
-df.specimen <- predict(object = df.pca, newdata = df.spec)  #loadings are the same but PC scores are different https://stackoverflow.com/questions/46828500/predict-new-data-into-pca-space-in-r
-#df.specimen2 <- predict(df.pca, df.spec) #predict uses the same function
+#df.specimen <- df.spec %*% df.pca$rotation   #Does not work
+df.specimen <- scale(df.spec) %*% df.pca$rotation #plots in similar space but not sure in same PCA space
+
+#do the projections individually
+#for()
 ```
 
 ```{r}
@@ -229,6 +237,7 @@ autoplot(df.pca, data = m, colour = 'habitat', label = TRUE, label.size = 3,
   scale_color_manual(breaks = c("CH", "MH", "OH"),
                      values=c("dodgerblue", "chartreuse", "goldenrod1"))+
   geom_point(data = m.spec[rownames(m.spec) %in% rownames(df.specimen),], aes(x=df.specimen[,1], y=df.specimen[,2]))
+ # geom_text(aes(label=row.names(m.spec[rownames(m.spec) %in% rownames(df.specimen),])))
 ```
 
 
