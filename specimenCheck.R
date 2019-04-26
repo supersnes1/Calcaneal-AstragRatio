@@ -39,11 +39,12 @@ pca <- prcomp(m.sp.short)
 tax <- table(m$binom)
 tax <- names(tax)[tax>1]
 
-
 m.proj <- data.matrix(m.short)[,sapply(m.short, class)=="numeric"]
 m.proj <- t(apply(m.proj, 1,  function(x) x - pca$center))
 m.proj <- m.proj %*% pca$rotation
 
+#make single plot to track down where specific specimens occur in relation to species average
+quartz(height = 8, width = 11)
 this.x <- 2
 this.y <- 3
 plot(pca$x[,this.x], pca$x[,this.y], type="n", xlim = range(m.proj[,this.x]), ylim = range(m.proj[,this.y]), xlab=paste("PC", this.x), ylab=paste("PC", this.y))
@@ -56,3 +57,39 @@ sapply(tax, plotMultipleProjectedSpecimens)
 			 
 text(m.proj[m.short$binom %in% tax,this.x], m.proj[m.short$binom %in% tax,this.y], labels=m.short$binom[m.short$binom %in% tax], col="dodgerblue", cex=0.5)
 text(m.proj[m.short$binom %in% tax,this.x], m.proj[m.short$binom %in% tax,this.y], labels=rownames(m.short)[m.short$binom %in% tax], col="dodgerblue", cex=0.5, pos=1)
+
+#select for problematic species (e.g. Cervus canadensis)
+tax.cat <- c("Alces_alces", "Cervus_canadensis", "Kobus_kob", "Rangifer_tarandus")
+text(m.proj[m.short$binom %in% tax.cat,this.x], m.proj[m.short$binom %in% tax.cat,this.y], labels=m.short$binom[m.short$binom %in% tax.cat], col="red", cex=0.5)
+text(m.proj[m.short$binom %in% tax.cat,this.x], m.proj[m.short$binom %in% tax.cat,this.y], labels=rownames(m.short)[m.short$binom %in% tax.cat], col="red", cex=0.5, pos=1)
+
+#make group of plots that step through all species with multiuple specimens
+quartz(height = 48, width = 11)
+par(mfrow=c((length(tax)/2)+1,2))
+
+for(xx in seq(0, length(tax),1))
+{
+  this.x <- 2
+  this.y <- 3
+  plot(pca$x[,this.x], pca$x[,this.y], type="n", xlim = range(m.proj[,this.x]), ylim = range(m.proj[,this.y]), xlab=paste("PC", this.x), ylab=paste("PC", this.y))
+  abline(h=0, lty=3, col="gray50")
+  abline(v=0, lty=3, col="gray50")
+  
+  text(pca$x[,this.x], pca$x[,this.y], labels=rownames(pca$x), cex=0.5)
+  
+  sapply(tax, plotMultipleProjectedSpecimens)
+  
+  text(m.proj[m.short$binom %in% tax,this.x], m.proj[m.short$binom %in% tax,this.y], labels=m.short$binom[m.short$binom %in% tax], col="dodgerblue", cex=0.5)
+  text(m.proj[m.short$binom %in% tax,this.x], m.proj[m.short$binom %in% tax,this.y], labels=rownames(m.short)[m.short$binom %in% tax], col="dodgerblue", cex=0.5, pos=1)
+  
+  if(xx > 0)
+  {
+    #select for problematic species (e.g. Cervus canadensis)
+    text(m.proj[m.short$binom %in% tax[xx],this.x], m.proj[m.short$binom %in% tax[xx],this.y], labels=m.short$binom[m.short$binom %in% tax[xx]], col="red", cex=0.5)
+    text(m.proj[m.short$binom %in% tax[xx],this.x], m.proj[m.short$binom %in% tax[xx],this.y], labels=rownames(m.short)[m.short$binom %in% tax[xx]], col="red", cex=0.5, pos=1)
+  }
+}
+
+#project specimen data into plot to verify that measures were not overly variable
+
+#make plot to see which specimens are zoo, wild, unknown
