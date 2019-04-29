@@ -142,7 +142,18 @@ dat.proj <- dat.proj %*% pca$rotation  #getting values that are exaggerated
 dat.proj <- cbind(dat.specFixed$Catalog.Number, dat.proj)
 dat.proj <- as.data.frame(dat.proj)
 
-
+#n.rname.rows <- table(dat.proj$V1)
+#rnames <- vector()
+#rnames.list <- vector()
+#for(yy in unique(dat.proj$V1))
+#{
+#  for(kk in seq(1,n.rname.rows[names(n.rname.rows) == yy],1))
+#  {
+#    rnames[kk] <- paste(yy, paste("_",kk,sep=""),sep="") 
+#  }
+#  rnames.list <- append(rnames.list, rnames)
+#}
+#dat.proj[dat.proj$V1 == yy,]$V1 <- rnames
 #dat.proj[,!colnames(dat.proj)=="V1"] <- as.numeric(dat.proj[,!colnames(dat.proj)=="V1"])
 
 quartz(height = 8, width = 11)
@@ -154,12 +165,14 @@ abline(v=0, lty=3, col="gray50")
 
 text(pca$x[,this.x], pca$x[,this.y], labels=rownames(pca$x), cex=0.5)
 
-sapply(tax, plotMultipleProjectedMeasures)
+#sapply(tax, plotMultipleProjectedSpecimens)
 
 text(m.proj[m.short$binom %in% tax,this.x], m.proj[m.short$binom %in% tax,this.y], labels=m.short$binom[m.short$binom %in% tax], col="dodgerblue", cex=0.5)
 text(m.proj[m.short$binom %in% tax,this.x], m.proj[m.short$binom %in% tax,this.y], labels=rownames(m.short)[m.short$binom %in% tax], col="dodgerblue", cex=0.5, pos=1)
 
-text(dat.proj[dat.proj, this.x])
+#plot unique specimens into PCA space
+text(dat.proj[,this.x], dat.proj[,this.y], labels=dat.specFixed$Catalog.Number, col="green", cex=0.5)
+text(dat.proj[,this.x], dat.proj[,this.y], labels=rownames(m.short)[m.short$binom %in% tax], col="green", cex=0.5, pos=1)
 
 #make plot to see which specimens are zoo, wild, unknown
 #plot manual vs photo measure
