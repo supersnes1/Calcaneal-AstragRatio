@@ -18,13 +18,13 @@ plotMultipleProjectedSpecimens <- function(this.taxon) {
 	apply(m.proj[m.short$binom==this.taxon,c(this.x, this.y)], 1, plotOneProjectedSpecimen, this.taxon)
 }
 
-plotOneProjectedMeasures<- function(this.coord, this.taxon) {
-  arrows(x0=this.coord[1], x1=pca$x[this.taxon, this.x], y0=this.coord[2], y1=pca$x[this.taxon, this.y], length=0.10, angle=60, col="gray75")
-}
+#plotOneProjectedMeasures<- function(this.coord, this.taxon) {
+# arrows(x0=this.coord[1], x1=pca$x[this.taxon, this.x], y0=this.coord[2], y1=pca$x[this.taxon, this.y], length=0.10, angle=60, col="gray75")
+#}
 
-plotMultipleProjectedMeasures <- function(this.taxon) {
-  apply(m.proj[m.short$binom==this.taxon,c(this.x, this.y)], 1, plotOneProjectedMeasures, this.taxon)
-}
+#plotMultipleProjectedMeasures <- function(this.taxon) {
+#  apply(m.proj[m.short$binom==this.taxon,c(this.x, this.y)], 1, plotOneProjectedMeasures, this.taxon)
+#}
 
 dat <- read.csv("~/Dropbox/CalcanealGearRatio/LACM_CalcaneusMeasurements_2018_8_29.csv", stringsAsFactors=FALSE)
 dat <- dat[dat$Genus !="Dicerorhinus" & dat$Genus !="Diceros" & dat$Genus !="Hippopotamus",]
@@ -134,13 +134,14 @@ for(xx in unique(dat.cropped$Catalog.Number))
 dat.specFixed <- dat.specFixed[complete.cases(dat.specFixed),]
 
 
-dat.proj <- dat.specFixed[,sapply(dat.specFixed, class)=="numeric"]
+dat.proj <- log(dat.specFixed[,sapply(dat.specFixed, class)=="numeric"])
 dat.proj <- t(apply(dat.proj, 1,  function(x) x - pca$center))
 dat.proj <- dat.proj %*% pca$rotation  #getting values that are exaggerated
 #predict(object=pca, newdata = dat.proj)
 
-dat.proj <- cbind(dat.specFixed$Catalog.Number, dat.proj)
+dat.proj <- cbind(dat.proj, dat.specFixed$Catalog.Number)
 dat.proj <- as.data.frame(dat.proj)
+rownames(dat.proj) <- NULL
 
 #n.rname.rows <- table(dat.proj$V1)
 #rnames <- vector()
@@ -170,9 +171,48 @@ text(pca$x[,this.x], pca$x[,this.y], labels=rownames(pca$x), cex=0.5)
 text(m.proj[m.short$binom %in% tax,this.x], m.proj[m.short$binom %in% tax,this.y], labels=m.short$binom[m.short$binom %in% tax], col="dodgerblue", cex=0.5)
 text(m.proj[m.short$binom %in% tax,this.x], m.proj[m.short$binom %in% tax,this.y], labels=rownames(m.short)[m.short$binom %in% tax], col="dodgerblue", cex=0.5, pos=1)
 
+text(m.proj[!m.short$binom %in% tax,this.x], m.proj[!m.short$binom %in% tax,this.y], labels=rownames(m.short)[!m.short$binom %in% tax], col="dodgerblue", cex=0.5, pos=1)
 #plot unique specimens into PCA space
-text(dat.proj[,this.x], dat.proj[,this.y], labels=dat.specFixed$Catalog.Number, col="green", cex=0.5)
-text(dat.proj[,this.x], dat.proj[,this.y], labels=rownames(m.short)[m.short$binom %in% tax], col="green", cex=0.5, pos=1)
+dat.x <- dat.proj[,this.x]
+dat.y <- dat.proj[,this.y]
+names(dat.x) <- NULL
+names(dat.y) <- NULL
+
+text(as.numeric(as.character(dat.x)), as.numeric(as.character(dat.y)), labels=dat.specFixed$Catalog.Number, col="chartreuse4", cex=0.5)
+
+#make group of plots that step through all species with multiuple specimens
+quartz(height = 48, width = 11)
+par(mfrow=c((length(tax)/2)+1,2))
+
+for(xx in seq(0, length(tax),1))
+{
+  this.x <- 2
+  this.y <- 3
+  plot(pca$x[,this.x], pca$x[,this.y], type="n", xlim = range(m.proj[,this.x]), ylim = range(m.proj[,this.y]), xlab=paste("PC", this.x), ylab=paste("PC", this.y))
+  abline(h=0, lty=3, col="gray50")
+  abline(v=0, lty=3, col="gray50")
+  
+  text(pca$x[,this.x], pca$x[,this.y], labels=rownames(pca$x), cex=0.5)
+  
+  sapply(tax, plotMultipleProjectedSpecimens)
+  
+  text(m.proj[m.short$binom %in% tax,this.x], m.proj[m.short$binom %in% tax,this.y], labels=m.short$binom[m.short$binom %in% tax], col="dodgerblue", cex=0.5)
+  text(m.proj[m.short$binom %in% tax,this.x], m.proj[m.short$binom %in% tax,this.y], labels=rownames(m.short)[m.short$binom %in% tax], col="dodgerblue", cex=0.5, pos=1)
+  
+  if(xx > 0)
+  {
+    #select for problematic species (e.g. Cervus canadensis)
+    text(m.proj[m.short$binom %in% tax[xx],this.x], m.proj[m.short$binom %in% tax[xx],this.y], labels=m.short$binom[m.short$binom %in% tax[xx]], col="red", cex=0.5)
+    text(m.proj[m.short$binom %in% tax[xx],this.x], m.proj[m.short$binom %in% tax[xx],this.y], labels=rownames(m.short)[m.short$binom %in% tax[xx]], col="red", cex=0.5, pos=1)
+  
+    text(dat.proj[,this.x], dat.proj[,this.y], labels=dat.specFixed$Catalog.Number, col="chartreuse4", cex=0.5)
+  }
+}
+
+
+
+#text(dat.proj[,this.x], dat.proj[,this.y], labels=dat.specFixed$Catalog.Number, col="chartreuse4", cex=0.5)
+#text(dat.proj[,this.x], dat.proj[,this.y], labels=rownames(m.short)[m.short$binom %in% tax], col="green", cex=0.5, pos=1)
 
 #make plot to see which specimens are zoo, wild, unknown
 #plot manual vs photo measure
