@@ -83,8 +83,9 @@ m$Family <- MOM.Mat$FAMILY[match(m$taxon, MOM.Mat$TaxonomicName)]
 #family
 m$Order <- MOM.Mat$Order[match(m$taxon, MOM.Mat$TaxonomicName)]
 
-##remove Perissodactyls (3 species)
+##remove Perissodactyls (3 species) and Hippos
 m <- m[!m$Order == "Perissodactyla",]
+m <- m[m$Genus !="Dicerorhinus" & m$Genus !="Diceros" & m$Genus !="Hippopotamus",]
 
 ##species level
 m.sp <- as.data.frame(getSpeciesAverages(m))
@@ -180,7 +181,7 @@ summary(df.pca)
 ```{r}
 #plot(df.pca$x[,1], df.pca$x[,2], pch = 16, col = habitat.colors[m$habitat], ylab = "PC2", xlab = "PC1")
 
-autoplot(df.pca, data = m, colour = 'habitat', label = FALSE, label.size = 3, 
+autoplot(df.pca, data = m, colour = 'habitat', label = TRUE, label.size = 3, 
          loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3)+
   scale_color_manual(breaks = c("CH", "MH", "OH"),
                      values=c("dodgerblue", "chartreuse", "goldenrod1"))
@@ -224,6 +225,7 @@ library(MASS)
 
 lda.tst <- lda(x = as.matrix(df), grouping = m$habitat)
 plot(lda.tst, col = habitat.colors[m$habitat])
+
 ```
 
 ###Local Fisher Discriminant Analysis (LFDA)
@@ -336,6 +338,7 @@ plot(df.phylo.pca)
 require(maptools)
 plot(df.phylo.pca$S[,1],df.phylo.pca$S[,2], col = habitat.colors[m.tree$habitat], 
      pch =16, xlab = "PC1 (98.73%)", ylab = "PC2 (0.67 %)")
+text(df.phylo.pca$S[,1],df.phylo.pca$S[,2], rownames(df.phylo.pca$S), cex=0.5)
 #points(df.phylo.pca$L[,1:2])
 #pointLabel(df.phylo.pca$L[,2:3],             # set position of labels
 #           labels=rownames(df.phylo.pca$L),  # print labels
@@ -345,6 +348,7 @@ plot(df.phylo.pca$S[,1],df.phylo.pca$S[,2], col = habitat.colors[m.tree$habitat]
 ```{r}
 plot(df.phylo.pca$S[,2],df.phylo.pca$S[,3], col = habitat.colors[m.tree$habitat], 
      pch =16, xlab = "PC2 (0.67%)", ylab = "PC3 (0.45%)")
+text(df.phylo.pca$S[,2],df.phylo.pca$S[,3], rownames(df.phylo.pca$S), cex=0.5)
 #points(df.phylo.pca$L[,2:3])
 #pointLabel(df.phylo.pca$L[,2:3],             # set position of labels
 #           labels=rownames(df.phylo.pca$L),  # print labels
