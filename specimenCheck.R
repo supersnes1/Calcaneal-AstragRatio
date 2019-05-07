@@ -210,9 +210,108 @@ for(xx in seq(0, length(tax),1))
 }
 
 
+######################################################################################################################################
+##Check astragalus measures with those of Barr 2014
+barr.dat <- read.csv("/Users/emdoughty/Dropbox/CalcanealGearRatio/Data_Barr2014.csv", stringsAsFactors=FALSE)
+barr.dat$Taxon <- gsub(" ", "_", barr.dat$Taxon)
 
-#text(dat.proj[,this.x], dat.proj[,this.y], labels=dat.specFixed$Catalog.Number, col="chartreuse4", cex=0.5)
-#text(dat.proj[,this.x], dat.proj[,this.y], labels=rownames(m.short)[m.short$binom %in% tax], col="green", cex=0.5, pos=1)
+#Check if unwanted genera are removed
+dat.tax <- matrix(nrow = nrow(barr.dat), ncol = 2)
+colnames(dat.tax) <- c("Genus", "Species") 
+test <- strsplit(barr.dat$Taxon, "_")
+for(xx in seq(1, length(test),1)) { dat.tax[xx,] <- c(test[[xx]][1], test[[xx]][2])}
+dat <- cbind(barr.dat, dat.tax)
+nrow(barr.dat)
+barr.dat <- barr.dat[dat$Genus !="Dicerorhinus" & dat$Genus !="Diceros" & dat$Genus !="Hippopotamus",]
+nrow(barr.dat)
+barr.dat <- barr.dat[,!colnames(barr.dat) %in% c("Genus", "Species")]
 
-#make plot to see which specimens are zoo, wild, unknown
-#plot manual vs photo measure
+#rerun pca for astragalus only
+astrag.sp.short <- log(m.sp[complete.cases(m.sp), c("Length..medial.", "Length..lateral.", "Width..between.prox.condyles.",
+                                                    "Width..between.distal.condyles.navicular.facet.")])
+astrag.pca <- prcomp(astrag.sp.short)
+
+astrag.short <- m.short[, colnames(m.short) %in% c( "binom","Length..medial.", "Length..lateral.", 
+                                      "Width..between.prox.condyles.","Width..between.distal.condyles.navicular.facet.")]
+
+astrag.proj <- astrag.short[,sapply(astrag.short, class)=="numeric"]
+astrag.proj <- t(apply(astrag.proj, 1,  function(x) x - astrag.pca$center))
+astrag.proj <- astrag.proj %*% astrag.pca$rotation
+
+#prepare for comparison with my data
+barr.short <- barr.dat$Taxon
+barr.specNum <- barr.dat$individual
+barr.dat <- barr.dat[,colnames(barr.dat) %in% c("individual","Taxon", "LML", "MML","WAF", "WAT")]
+
+barr.proj <- log(barr.dat[,sapply(barr.dat, class)=="numeric"])
+barr.proj <- t(apply(barr.proj, 1,  function(x) x - astrag.pca$center))
+barr.proj <- barr.proj %*% astrag.pca$rotation  #getting values that are exaggerated
+
+barr.tax <- barr.short[barr.short %in% rownames(astrag.sp.short)]#get list of taxa shared with Barr 2014
+barr.tax <- which(barr.short %in% rownames(astrag.sp.short))#get list of taxa shared with Barr 2014
+
+
+#plot comaprison
+quartz(height = 8, width = 11)
+this.x <- 2
+this.y <- 3
+plot(astrag.pca$x[,this.x], astrag.pca$x[,this.y], type="n",xlim = range(c(astrag.proj[,this.x], astrag.pca$x[,this.x])), 
+     ylim = range(c(astrag.proj[,this.y], astrag.pca$x[,this.y])), 
+     xlab=paste("PC", this.x), ylab=paste("PC", this.y))
+abline(h=0, lty=3, col="gray50")
+abline(v=0, lty=3, col="gray50")
+
+text(astrag.pca$x[,this.x], astrag.pca$x[,this.y], labels=rownames(astrag.pca$x), cex=0.5)
+
+#sapply(tax, plotMultipleProjectedSpecimens)
+
+text(astrag.proj[astrag.short$binom %in% tax,this.x], astrag.proj[astrag.short$binom %in% tax,this.y], labels=astrag.short$binom[astrag.short$binom %in% tax], col="dodgerblue", cex=0.5)
+text(astrag.proj[astrag.short$binom %in% tax,this.x], astrag.proj[astrag.short$binom %in% tax,this.y], labels=rownames(astrag.short)[astrag.short$binom %in% tax], col="dodgerblue", cex=0.5, pos=1)
+
+text(barr.proj[barr.tax,this.x], barr.proj[barr.tax,this.y], labels=barr.short[barr.tax], col="orange", cex=0.5)
+text(barr.proj[barr.tax,this.x], barr.proj[barr.tax,this.y], labels=barr.specNum[barr.tax], col="orange", cex=0.5, pos=1)
+
+#make group of plots that step through all species with multiuple specimens
+quartz(height = 48, width = 11)
+barr.uni.sp <- unique(barr.short[barr.tax])
+par(mfrow=c((length(barr.uni.sp)/2)+1,2))
+
+for(xx in seq(0, length(barr.uni.sp),1))
+{
+  this.x <- 2
+  this.y <- 3
+  plot(astrag.pca$x[,this.x], astrag.pca$x[,this.y], type="n",xlim = range(c(astrag.proj[,this.x], astrag.pca$x[,this.x], barr.proj[,this.x])), 
+       ylim = range(c(astrag.proj[,this.y], astrag.pca$x[,this.y], barr.proj[,this.y])), 
+       xlab=paste("PC", this.x), ylab=paste("PC", this.y))
+  abline(h=0, lty=3, col="gray50")
+  abline(v=0, lty=3, col="gray50")
+  
+  text(astrag.pca$x[,this.x], astrag.pca$x[,this.y], labels=rownames(astrag.pca$x), cex=0.5)
+  
+  #sapply(tax, plotMultipleProjectedSpecimens)
+
+  text(astrag.proj[astrag.short$binom %in% tax,this.x], astrag.proj[astrag.short$binom %in% tax,this.y], labels=astrag.short$binom[astrag.short$binom %in% tax], col="dodgerblue", cex=0.5)
+  text(astrag.proj[astrag.short$binom %in% tax,this.x], astrag.proj[astrag.short$binom %in% tax,this.y], labels=rownames(astrag.short)[astrag.short$binom %in% tax], col="dodgerblue", cex=0.5, pos=1)
+  
+  text(barr.proj[barr.tax,this.x], barr.proj[barr.tax,this.y], labels=barr.short[barr.tax], col="darkseagreen", cex=0.5)
+  text(barr.proj[barr.tax,this.x], barr.proj[barr.tax,this.y], labels=barr.specNum[barr.tax], col="darkseagreen", cex=0.5, pos=1)
+  
+  if(xx > 0)
+  {
+    #select for problematic species (e.g. Cervus canadensis)
+    text(astrag.pca$x[rownames(astrag.sp.short) %in% barr.uni.sp[xx],this.x], astrag.pca$x[rownames(astrag.sp.short) %in% barr.uni.sp[xx],this.y], 
+         labels=rownames(astrag.pca$x)[xx],
+         cex=0.5, col="darkblue")
+   
+    text(astrag.proj[astrag.short$binom %in% barr.uni.sp[xx],this.x], astrag.proj[astrag.short$binom %in% barr.uni.sp[xx],this.y],
+         labels=astrag.short$binom[astrag.short$binom %in% barr.uni.sp[xx]], col="red", cex=0.5)
+    text(astrag.proj[astrag.short$binom %in% barr.uni.sp[xx],this.x], astrag.proj[astrag.short$binom %in% barr.uni.sp[xx],this.y], 
+         labels=rownames(astrag.short)[astrag.short$binom %in% barr.uni.sp[xx]], col="red", cex=0.5, pos=1)
+    
+    text(barr.proj[rownames(astrag.sp.short) %in% barr.uni.sp[xx],this.x], barr.proj[rownames(astrag.sp.short) %in% barr.uni.sp[xx],this.y], 
+         labels=barr.short[barr.short %in% barr.uni.sp[xx]], col="deeppink", cex=0.5)
+    text(barr.proj[rownames(astrag.sp.short) %in% barr.uni.sp[xx],this.x], barr.proj[rownames(astrag.sp.short) %in% barr.uni.sp[xx],this.y], 
+         labels=barr.specNum[barr.short %in% barr.uni.sp[xx]], col="deeppink", cex=0.5, pos=1)
+  }
+}
+
