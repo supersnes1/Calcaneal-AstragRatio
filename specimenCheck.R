@@ -225,6 +225,7 @@ nrow(barr.dat)
 barr.dat <- barr.dat[dat$Genus !="Dicerorhinus" & dat$Genus !="Diceros" & dat$Genus !="Hippopotamus",]
 nrow(barr.dat)
 barr.dat <- barr.dat[,!colnames(barr.dat) %in% c("Genus", "Species")]
+barr.dat <- barr.dat[,c(1,2,4,3,5,6)]
 
 #rerun pca for astragalus only
 astrag.sp.short <- log(m.sp[complete.cases(m.sp), c("Length..medial.", "Length..lateral.", "Width..between.prox.condyles.",
@@ -308,9 +309,9 @@ for(xx in seq(0, length(barr.uni.sp),1))
     text(astrag.proj[astrag.short$binom %in% barr.uni.sp[xx],this.x], astrag.proj[astrag.short$binom %in% barr.uni.sp[xx],this.y], 
          labels=rownames(astrag.short)[astrag.short$binom %in% barr.uni.sp[xx]], col="red", cex=0.5, pos=1)
     
-    text(barr.proj[rownames(astrag.sp.short) %in% barr.uni.sp[xx],this.x], barr.proj[rownames(astrag.sp.short) %in% barr.uni.sp[xx],this.y], 
+    text(barr.proj[barr.short %in% barr.uni.sp[xx],this.x], barr.proj[barr.short %in% barr.uni.sp[xx],this.y], 
          labels=barr.short[barr.short %in% barr.uni.sp[xx]], col="deeppink", cex=0.5)
-    text(barr.proj[rownames(astrag.sp.short) %in% barr.uni.sp[xx],this.x], barr.proj[rownames(astrag.sp.short) %in% barr.uni.sp[xx],this.y], 
+    text(barr.proj[barr.short %in% barr.uni.sp[xx],this.x], barr.proj[barr.short %in% barr.uni.sp[xx],this.y], 
          labels=barr.specNum[barr.short %in% barr.uni.sp[xx]], col="deeppink", cex=0.5, pos=1)
   }
 }
